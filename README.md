@@ -323,9 +323,13 @@ The Kimi modes use intelligent model selection based on agent role and workload:
   * `standard` → `gpt-5` (OpenAI)
   * `development` → `claude-4` (Anthropic)
   * `cost_effective` → `claude-3-haiku` (Anthropic)
-* The CLI exports `AI_MODE` from your config’s `extraction.ai_mode` at [`cli/garmin_ai_coach_cli.py`](cli/garmin_ai_coach_cli.py:126).
+  * `kimi` → `kimi-k2-0905` (Moonshot AI)
+  * `kimi_balanced` → Mixed K2-0905/V1 models (Moonshot AI)
+  * `kimi_cost_effective` → V1 models (Moonshot AI)
+* The CLI exports `AI_MODE` from your config's `extraction.ai_mode` at [`cli/garmin_ai_coach_cli.py`](cli/garmin_ai_coach_cli.py:126).
 * If you only set `OPENAI_API_KEY`, use `ai_mode: "standard"` (default maps to an OpenAI model) or update `stage_models` to point your chosen mode to an OpenAI model (e.g., `gpt-4o`, `gpt-5-mini`) in [`services/ai/ai_settings.py`](services/ai/ai_settings.py:24). Available model IDs are defined in [`python.ModelSelector.CONFIGURATIONS`](services/ai/model_config.py:22), and the provider is auto-selected in [`python.ModelSelector.get_llm()`](services/ai/model_config.py:61).
 * If you only set `ANTHROPIC_API_KEY`, keep `ai_mode: "development"` or `"cost_effective"` (both map to Anthropic by default) or change the mapping.
+* If you only set `MOONSHOT_API_KEY`, use `ai_mode: "kimi"`, `"kimi_balanced"`, or `"kimi_cost_effective"` (all three map to Moonshot AI models).
 * If you use OpenRouter (e.g., DeepSeek), map your mode to an OpenRouter model key from [`python.ModelSelector.CONFIGURATIONS`](services/ai/model_config.py:22).
 
 ---
