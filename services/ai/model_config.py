@@ -66,6 +66,16 @@ class ModelSelector:
         "grok-4": ModelConfiguration(
             name="x-ai/grok-4", base_url="https://openrouter.ai/api/v1"
         ),
+        # Moonshot AI Models (Kimi K2)
+        "kimi-k2": ModelConfiguration(
+            name="moonshot-v1-128k", base_url="https://api.moonshot.cn/v1"
+        ),
+        "kimi-k2-8k": ModelConfiguration(
+            name="moonshot-v1-8k", base_url="https://api.moonshot.cn/v1"
+        ),
+        "kimi-k2-32k": ModelConfiguration(
+            name="moonshot-v1-32k", base_url="https://api.moonshot.cn/v1"
+        ),
     }
 
     @classmethod
@@ -77,6 +87,7 @@ class ModelSelector:
         api_key_map = {
             "anthropic": config.anthropic_api_key,
             "openrouter": config.openrouter_api_key,
+            "moonshot": config.moonshot_api_key,
         }
         api_key = next((api_key_map[k] for k in api_key_map if k in model_config.base_url), config.openai_api_key)
 

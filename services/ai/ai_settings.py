@@ -55,6 +55,17 @@ class AISettings:
                 AgentRole.COMPETITION_PLANNER: "claude-4",
                 AgentRole.SEASON_PLANNER: "claude-4",
             },
+            AIMode.KIMI: {
+                AgentRole.SUMMARIZER: "kimi-k2",
+                AgentRole.FORMATTER: "kimi-k2",
+                AgentRole.METRICS_EXPERT: "kimi-k2",
+                AgentRole.PHYSIOLOGY_EXPERT: "kimi-k2",
+                AgentRole.ACTIVITY_EXPERT: "kimi-k2",
+                AgentRole.SYNTHESIS: "kimi-k2",
+                AgentRole.WORKOUT: "kimi-k2",
+                AgentRole.COMPETITION_PLANNER: "kimi-k2",
+                AgentRole.SEASON_PLANNER: "kimi-k2",
+            },
         }
     )
 
