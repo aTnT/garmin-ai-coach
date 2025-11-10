@@ -66,6 +66,33 @@ class AISettings:
                 AgentRole.COMPETITION_PLANNER: "kimi-k2",
                 AgentRole.SEASON_PLANNER: "kimi-k2",
             },
+            AIMode.KIMI_BALANCED: {
+                # K2-0905 for tool-calling experts (need latest agentic features)
+                AgentRole.METRICS_EXPERT: "kimi-k2-0905",
+                AgentRole.PHYSIOLOGY_EXPERT: "kimi-k2-0905",
+                AgentRole.ACTIVITY_EXPERT: "kimi-k2-0905",
+                AgentRole.SYNTHESIS: "kimi-k2-0905",
+                AgentRole.COMPETITION_PLANNER: "kimi-k2-0905",
+                AgentRole.SEASON_PLANNER: "kimi-k2-0905",
+                # V1-32k for data processing roles (cost optimization)
+                AgentRole.SUMMARIZER: "kimi-v1-32k",
+                AgentRole.FORMATTER: "kimi-v1-32k",
+                AgentRole.WORKOUT: "kimi-v1-32k",
+            },
+            AIMode.KIMI_COST_EFFECTIVE: {
+                # V1-8k for high-output roles (cheapest per-token output)
+                AgentRole.SUMMARIZER: "kimi-v1-8k",
+                AgentRole.FORMATTER: "kimi-v1-8k",
+                AgentRole.WORKOUT: "kimi-v1-8k",
+                # V1-32k for tool-calling roles (balance cost and features)
+                AgentRole.METRICS_EXPERT: "kimi-v1-32k",
+                AgentRole.PHYSIOLOGY_EXPERT: "kimi-v1-32k",
+                AgentRole.ACTIVITY_EXPERT: "kimi-v1-32k",
+                AgentRole.COMPETITION_PLANNER: "kimi-v1-32k",
+                AgentRole.SEASON_PLANNER: "kimi-v1-32k",
+                # V1-128k for synthesis (high context needs)
+                AgentRole.SYNTHESIS: "kimi-v1-128k",
+            },
         }
     )
 

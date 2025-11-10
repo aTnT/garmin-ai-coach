@@ -17,6 +17,8 @@ class AIMode(Enum):
     COST_EFFECTIVE = "cost_effective"
     DEVELOPMENT = "development"
     KIMI = "kimi"
+    KIMI_BALANCED = "kimi_balanced"
+    KIMI_COST_EFFECTIVE = "kimi_cost_effective"
 
 @dataclass
 class Config:

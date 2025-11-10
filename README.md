@@ -6,7 +6,7 @@
 [![Powered by LangGraph](https://img.shields.io/badge/Powered%20by-LangGraph-purple.svg)](https://langchain-ai.github.io/langgraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Provider-agnostic:** OpenAI (incl. GPT-5), Anthropic, and OpenRouter are supported.
+**Provider-agnostic:** OpenAI (incl. GPT-5), Anthropic, OpenRouter, and Moonshot AI (Kimi K2) are supported.
 
 ---
 
@@ -217,6 +217,7 @@ This will automatically install all dependencies specified in [`pixi.toml`](pixi
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 OPENROUTER_API_KEY=...
+MOONSHOT_API_KEY=...
 LANGSMITH_API_KEY=lsv2_...  # Optional: professional observability
 
 # AI mode default (overridden by config's extraction.ai_mode)
@@ -251,9 +252,12 @@ python cli/garmin_ai_coach_cli.py --config my_training_config.yaml
 
 Choose your analysis depth and cost balance:
 
-* **`development`** — Fast iterations, cost-effective (7–14 days data)
-* **`standard`** — Comprehensive analysis (21–56 days data)
-* **`cost_effective`** — Balanced approach for budget-conscious users
+* **`development`** — Fast iterations with Claude-4 (7–14 days data)
+* **`standard`** — Comprehensive analysis with GPT-5 (21–56 days data)
+* **`cost_effective`** — Claude-3-Haiku for budget-conscious users
+* **`kimi`** — Moonshot AI Kimi K2-0905 (best performance, 128K context)
+* **`kimi_balanced`** — Smart K2/V1 mix (15% cost savings vs kimi)
+* **`kimi_cost_effective`** — V1 models optimized for cost (26% savings)
 
 ### Supported LLM Providers
 
@@ -273,7 +277,44 @@ Choose your analysis depth and cost balance:
 
   * `deepseek-chat`, `deepseek-reasoner`
 
+* **🌙 Moonshot AI (Kimi K2)**
+
+  * **K2 Generation** (latest, best agentic features)
+    * `kimi-k2-0905` — Sept 2025 release, 128K context, $0.15/M in, $2.50/M out
+    * `kimi-k2-0711` — July 2025 release, 128K context, $0.15/M in, $2.50/M out
+  * **V1 Generation** (cost-optimized, tiered pricing)
+    * `kimi-v1-8k` — 8K context, $0.20/M in, $2.00/M out (cheapest output!)
+    * `kimi-v1-32k` — 32K context, $1.00/M in, $3.00/M out
+    * `kimi-v1-128k` — 128K context, $2.00/M in, $5.00/M out
+
 *Configure in [`services/ai/ai_settings.py`](services/ai/ai_settings.py:24) by updating the `stage_models` mapping in [`python.AISettings()`](services/ai/ai_settings.py:19).*
+
+### 💰 Kimi Cost Optimization Strategy
+
+The Kimi modes use intelligent model selection based on agent role and workload:
+
+| AI Mode | Strategy | Typical Cost (100K in, 50K out) | Use Case |
+|---------|----------|----------------------------------|----------|
+| **`kimi`** | All K2-0905 (latest) | $140.00 | Best performance, agentic features |
+| **`kimi_balanced`** | K2 for experts, V1 for processing | $118.50 (15% savings) | Balanced cost/performance |
+| **`kimi_cost_effective`** | Primarily V1 models | $104.00 (26% savings) | Maximum cost efficiency |
+
+**Role Assignments:**
+
+* **KIMI** — All roles use `kimi-k2-0905` (latest agentic features, unified pricing)
+* **KIMI_BALANCED**
+  * Tool-calling experts (Metrics, Physiology, Activity, Synthesis): `kimi-k2-0905`
+  * Data processing (Summarizer, Formatter, Workout): `kimi-v1-32k`
+* **KIMI_COST_EFFECTIVE**
+  * High-output roles (Summarizer, Formatter, Workout): `kimi-v1-8k` (cheapest output)
+  * Tool-calling roles: `kimi-v1-32k` (balanced)
+  * Synthesis (high context needs): `kimi-v1-128k`
+
+**Choosing Your Mode:**
+
+* Choose `kimi` for maximum performance and latest features
+* Choose `kimi_balanced` for production workloads (15% cheaper, minimal quality tradeoff)
+* Choose `kimi_cost_effective` for budget constraints or large-scale processing
 
 **Important — provider selection depends on your AI mode:**
 

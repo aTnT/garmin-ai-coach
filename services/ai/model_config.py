@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 class ModelConfiguration:
     name: str
     base_url: str
+    context_window: int | None = None  # Max context tokens
+    input_cost_per_m: float | None = None  # USD per 1M input tokens
+    output_cost_per_m: float | None = None  # USD per 1M output tokens
 
 
 class ModelSelector:
@@ -66,15 +69,66 @@ class ModelSelector:
         "grok-4": ModelConfiguration(
             name="x-ai/grok-4", base_url="https://openrouter.ai/api/v1"
         ),
-        # Moonshot AI Models (Kimi K2)
+        # Moonshot AI Models (Kimi K2 - Latest Generation)
+        # K2 models: unified pricing across all context lengths, best agentic features
+        "kimi-k2-0905": ModelConfiguration(
+            name="kimi-k2-0905-preview",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=128000,
+            input_cost_per_m=0.15,
+            output_cost_per_m=2.50,
+        ),
+        "kimi-k2-0711": ModelConfiguration(
+            name="kimi-k2-0711-preview",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=128000,
+            input_cost_per_m=0.15,
+            output_cost_per_m=2.50,
+        ),
+        # Moonshot AI Models (V1 - Cost Optimized)
+        # V1 models: tiered pricing, cheaper for smaller contexts and output
+        "kimi-v1-128k": ModelConfiguration(
+            name="moonshot-v1-128k",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=128000,
+            input_cost_per_m=2.00,
+            output_cost_per_m=5.00,
+        ),
+        "kimi-v1-32k": ModelConfiguration(
+            name="moonshot-v1-32k",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=32000,
+            input_cost_per_m=1.00,
+            output_cost_per_m=3.00,
+        ),
+        "kimi-v1-8k": ModelConfiguration(
+            name="moonshot-v1-8k",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=8000,
+            input_cost_per_m=0.20,
+            output_cost_per_m=2.00,
+        ),
+        # Aliases for backward compatibility
         "kimi-k2": ModelConfiguration(
-            name="moonshot-v1-128k", base_url="https://api.moonshot.cn/v1"
+            name="kimi-k2-0905-preview",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=128000,
+            input_cost_per_m=0.15,
+            output_cost_per_m=2.50,
         ),
         "kimi-k2-8k": ModelConfiguration(
-            name="moonshot-v1-8k", base_url="https://api.moonshot.cn/v1"
+            name="moonshot-v1-8k",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=8000,
+            input_cost_per_m=0.20,
+            output_cost_per_m=2.00,
         ),
         "kimi-k2-32k": ModelConfiguration(
-            name="moonshot-v1-32k", base_url="https://api.moonshot.cn/v1"
+            name="moonshot-v1-32k",
+            base_url="https://api.moonshot.cn/v1",
+            context_window=32000,
+            input_cost_per_m=1.00,
+            output_cost_per_m=3.00,
         ),
     }
 
