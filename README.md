@@ -30,6 +30,7 @@
 ## ✨ What Makes This Special
 
 * 🎯 **Training Readiness Score** — Daily 0-100 score tells you if you should rest, train easy, or push hard
+* 💪 **Workout Generator** — Generate structured, sport-specific workouts adapted to your readiness and zones
 * 💬 **Conversational AI agents** — Agents can ask clarifying questions during analysis and planning (HITL)
 * Parallel analysis across specialized agents (load, physiology, execution)
 * Interactive reports with evidence and actionable next steps
@@ -137,16 +138,21 @@ pixi run coach-init my_training_config.yaml
 
 # 3) Edit the config with your details, then run
 pixi run coach-cli --config my_training_config.yaml
+
+# 4) Generate structured workouts (NEW!)
+pixi run workout-gen --sport running --type threshold --duration 60 --readiness 85
 ```
 
 ### CLI command reference
 
 ```bash
-# Run with an existing config
+# Analysis & Planning
 python cli/garmin_ai_coach_cli.py --config my_training_config.yaml [--output-dir ./data]
-
-# Generate a new config template
 python cli/garmin_ai_coach_cli.py --init-config my_training_config.yaml
+
+# Workout Generation (NEW!)
+python cli/workout_generator_cli.py --sport running --type threshold --duration 60 --readiness 85
+python cli/workout_generator_cli.py --help  # See all options
 ```
 
 **Options:**
