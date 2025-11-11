@@ -13,6 +13,7 @@ from ..nodes.metrics_summarizer_node import metrics_summarizer_node
 from ..nodes.physiology_expert_node import physiology_expert_node
 from ..nodes.physiology_summarizer_node import physiology_summarizer_node
 from ..nodes.plot_resolution_node import plot_resolution_node
+from ..nodes.readiness_node import readiness_assessment_node
 from ..nodes.synthesis_node import synthesis_node
 from ..state.training_analysis_state import TrainingAnalysisState, create_initial_state
 
@@ -27,11 +28,12 @@ def create_analysis_workflow():
     workflow.add_node("metrics_summarizer", metrics_summarizer_node)
     workflow.add_node("physiology_summarizer", physiology_summarizer_node)
     workflow.add_node("activity_summarizer", activity_summarizer_node)
-    
+
     workflow.add_node("metrics_expert", metrics_expert_node)
     workflow.add_node("physiology_expert", physiology_expert_node)
     workflow.add_node("activity_expert", activity_expert_node)
-    
+
+    workflow.add_node("readiness", readiness_assessment_node)
     workflow.add_node("synthesis", synthesis_node)
     workflow.add_node("formatter", formatter_node)
     workflow.add_node("plot_resolution", plot_resolution_node)
@@ -44,16 +46,17 @@ def create_analysis_workflow():
     workflow.add_edge("physiology_summarizer", "physiology_expert")
     workflow.add_edge("activity_summarizer", "activity_expert")
 
-    workflow.add_edge("metrics_expert", "synthesis")
-    workflow.add_edge("physiology_expert", "synthesis")
-    workflow.add_edge("activity_expert", "synthesis")
+    workflow.add_edge("metrics_expert", "readiness")
+    workflow.add_edge("physiology_expert", "readiness")
+    workflow.add_edge("activity_expert", "readiness")
+    workflow.add_edge("readiness", "synthesis")
     workflow.add_edge("synthesis", "formatter")
     workflow.add_edge("formatter", "plot_resolution")
     workflow.add_edge("plot_resolution", END)
 
     checkpointer = MemorySaver()
     app = workflow.compile(checkpointer=checkpointer)
-    logger.info("Created complete LangGraph analysis workflow with 2-stage architecture (3 summarizers + 3 experts + synthesis + formatting)")
+    logger.info("Created complete LangGraph analysis workflow with 2-stage architecture (3 summarizers + 3 experts + readiness + synthesis + formatting)")
     
     return app
 
@@ -96,11 +99,12 @@ def create_simple_sequential_workflow():
     workflow.add_node("metrics_summarizer", metrics_summarizer_node)
     workflow.add_node("physiology_summarizer", physiology_summarizer_node)
     workflow.add_node("activity_summarizer", activity_summarizer_node)
-    
+
     workflow.add_node("metrics_expert", metrics_expert_node)
     workflow.add_node("physiology_expert", physiology_expert_node)
     workflow.add_node("activity_expert", activity_expert_node)
-    
+
+    workflow.add_node("readiness", readiness_assessment_node)
     workflow.add_node("synthesis", synthesis_node)
     workflow.add_node("formatter", formatter_node)
     workflow.add_node("plot_resolution", plot_resolution_node)
@@ -111,7 +115,8 @@ def create_simple_sequential_workflow():
     workflow.add_edge("physiology_summarizer", "physiology_expert")
     workflow.add_edge("physiology_expert", "activity_summarizer")
     workflow.add_edge("activity_summarizer", "activity_expert")
-    workflow.add_edge("activity_expert", "synthesis")
+    workflow.add_edge("activity_expert", "readiness")
+    workflow.add_edge("readiness", "synthesis")
     workflow.add_edge("synthesis", "formatter")
     workflow.add_edge("formatter", "plot_resolution")
     workflow.add_edge("plot_resolution", END)

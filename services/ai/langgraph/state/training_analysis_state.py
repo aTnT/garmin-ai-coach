@@ -25,6 +25,11 @@ class TrainingAnalysisState(MessagesState):
     physiology_result: str | None
     synthesis_result: str | None
 
+    readiness_result: str | None
+    readiness_score: int | None
+    readiness_recommendation: str | None
+    readiness_confidence: float | None
+
     season_plan: str | None
     weekly_plan: str | None
 
@@ -76,6 +81,10 @@ def create_initial_state(
         activity_result=None,
         physiology_result=None,
         synthesis_result=None,
+        readiness_result=None,
+        readiness_score=None,
+        readiness_recommendation=None,
+        readiness_confidence=None,
         season_plan=None,
         weekly_plan=None,
         analysis_html=None,

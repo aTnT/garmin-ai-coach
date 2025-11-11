@@ -249,6 +249,7 @@ async def run_analysis_from_config(config_path: Path) -> None:
         for filename, key in [
             ("analysis.html", "analysis_html"),
             ("planning.html", "planning_html"),
+            ("readiness_report.md", "readiness_result"),
             ("metrics_result.md", "metrics_result"),
             ("activity_result.md", "activity_result"),
             ("physiology_result.md", "physiology_result"),

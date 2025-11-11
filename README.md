@@ -29,6 +29,7 @@
 
 ## ✨ What Makes This Special
 
+* 🎯 **Training Readiness Score** — Daily 0-100 score tells you if you should rest, train easy, or push hard
 * 💬 **Conversational AI agents** — Agents can ask clarifying questions during analysis and planning (HITL)
 * Parallel analysis across specialized agents (load, physiology, execution)
 * Interactive reports with evidence and actionable next steps
@@ -158,6 +159,7 @@ python cli/garmin_ai_coach_cli.py --init-config my_training_config.yaml
 
 * `analysis.html` — Comprehensive performance analysis
 * `planning.html` — Detailed weekly training plan
+* `readiness_report.md` — Daily training readiness assessment (NEW!)
 * `metrics_result.md`, `activity_result.md`, `physiology_result.md`, `season_plan.md` — Intermediate artifacts
 * `summary.json` — Metadata and cost tracking with keys:
 
