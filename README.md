@@ -31,6 +31,8 @@
 
 * 🎯 **Training Readiness Score** — Daily 0-100 score tells you if you should rest, train easy, or push hard
 * 💪 **Workout Generator** — Generate structured, sport-specific workouts adapted to your readiness and zones
+* 📅 **Dynamic Training Plans** — AI-powered training plans that automatically adapt based on performance metrics
+* 📊 **Performance Analysis** — FTP trends, power curves, interval quality, VO2max tracking with smart adaptation triggers
 * 💬 **Conversational AI agents** — Agents can ask clarifying questions during analysis and planning (HITL)
 * Parallel analysis across specialized agents (load, physiology, execution)
 * Interactive reports with evidence and actionable next steps
@@ -125,6 +127,23 @@ flowchart LR
 * 📊 **Volume and Intensity Monitoring** with built-in flexibility
 * 🔄 **Adaptive Workout Options** based on readiness and fatigue
 
+### 🎯 Dynamic Training Plans
+
+**Intelligent, adaptive training plans that evolve with your performance:**
+
+* **Goal-Based Planning** — Create race-specific plans with automatic periodization (Base → Build → Peak → Taper)
+* **Performance-Based Adaptation** — Plans automatically adjust based on:
+  - FTP trends and power curve analysis
+  - Interval execution quality and zone adherence
+  - VO2max progression tracking
+  - HR drift and fatigue indicators
+  - Completion rates and readiness scores
+* **Advanced Analytics** — Leverages existing power curve analysis and historical trends
+* **CLI Management** — Full command-line interface for creating, viewing, and adapting plans
+* **Smart Overrides** — Continue training when performance is improving despite moderate readiness
+
+**See [DYNAMIC_TRAINING_PLANS.md](docs/DYNAMIC_TRAINING_PLANS.md) for comprehensive documentation.**
+
 ---
 
 ## 🚀 Quick Start (CLI-first)
@@ -139,8 +158,12 @@ pixi run coach-init my_training_config.yaml
 # 3) Edit the config with your details, then run
 pixi run coach-cli --config my_training_config.yaml
 
-# 4) Generate structured workouts (NEW!)
+# 4) Generate structured workouts
 pixi run workout-gen --sport running --type threshold --duration 60 --readiness 85
+
+# 5) Create and manage training plans (NEW!)
+python cli/training_plan_cli.py create --athlete "John Doe" --race-name "Boston Marathon" --race-date "2026-04-20"
+python cli/training_plan_cli.py analyze --demo  # View performance analysis
 ```
 
 ### CLI command reference
@@ -150,9 +173,18 @@ pixi run workout-gen --sport running --type threshold --duration 60 --readiness 
 python cli/garmin_ai_coach_cli.py --config my_training_config.yaml [--output-dir ./data]
 python cli/garmin_ai_coach_cli.py --init-config my_training_config.yaml
 
-# Workout Generation (NEW!)
+# Workout Generation
 python cli/workout_generator_cli.py --sport running --type threshold --duration 60 --readiness 85
 python cli/workout_generator_cli.py --help  # See all options
+
+# Training Plan Management (NEW!)
+python cli/training_plan_cli.py create --athlete "Name" --race-name "Race" --race-date "YYYY-MM-DD"
+python cli/training_plan_cli.py list                    # List all active plans
+python cli/training_plan_cli.py show <plan_id>          # Show plan details
+python cli/training_plan_cli.py upcoming <plan_id>      # Show upcoming workouts
+python cli/training_plan_cli.py adapt <plan_id>         # Check adaptation needs
+python cli/training_plan_cli.py analyze --demo          # Performance analysis demo
+python cli/training_plan_cli.py export <plan_id>        # Export to JSON
 ```
 
 **Options:**
@@ -452,10 +484,22 @@ garmin-ai-coach/
 ├── 🔒 core/                     # Configuration management
 ├── 🔧 services/
 │   ├── 🏃‍♂️ garmin/              # Data extraction & models
-│   ├── 🧠 ai/langgraph/        # Modern AI workflow system
-│   └── 🎨 ai/tools/plotting/   # Secure visualization tools
+│   ├── 🧠 ai/
+│   │   ├── langgraph/          # Modern AI workflow system
+│   │   ├── planning/           # Dynamic training plans (NEW!)
+│   │   │   ├── plan_models.py             # Data structures
+│   │   │   ├── plan_storage.py            # Persistence layer
+│   │   │   ├── performance_analyzer.py    # Performance metrics
+│   │   │   ├── adaptation_engine.py       # Smart adaptation
+│   │   │   ├── activity_matcher.py        # Workout tracking
+│   │   │   └── workout_selector.py        # Context-aware selection
+│   │   ├── power_curve/        # Power analysis tools
+│   │   ├── trends/             # Historical trends analysis
+│   │   └── tools/plotting/     # Secure visualization tools
 ├── 📚 agents_docs/             # Architecture & planning docs
 ├── ⚡ cli/                     # CLI (primary interface)
+│   ├── training_plan_cli.py   # Training plan management (NEW!)
+│   └── workout_generator_cli.py
 └── ⚙️ pixi.toml                # Dependencies & tasks
 ```
 
@@ -479,9 +523,21 @@ pixi run dead-code              # Find unused code (Vulture)
 
 ## 🎯 What's Next
 
+### ✅ Recently Completed
+
+* **📅 Dynamic Training Plans** — Intelligent, adaptive training plans with automatic periodization
+* **📊 Performance-Based Adaptation** — FTP trends, power curves, interval quality analysis
+* **💪 Power Curve & Critical Power Analysis** — Comprehensive power metrics tracking
+* **📈 Historical Trends Analysis** — Long-term performance tracking and insights
+
 ### 🔮 Roadmap
 
+* **🔗 LangGraph Integration** — Connect training plans to existing season/weekly planners
+* **🔄 Continuous Planning** — Rolling 14-day window with daily plan refresh
+* **🏁 Race Prediction** — Estimate finish time from training data with confidence intervals
+* **🏊‍♂️ Multi-Sport Support** — Triathlon training plans with brick workouts
 * **🔗 Platform Integration** — Wahoo Integration
+* **👥 Social Features** — Share plans with coach, group training coordination
 
 ### 🏆 Success Stories
 

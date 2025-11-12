@@ -35,7 +35,7 @@ class TestTrainingPlanModels:
 
     def test_training_phase_creation(self):
         """Test creating a training phase."""
-        start_date = date(2025, 1, 1)
+        start_date = date.today() + timedelta(days=30)
         phase = create_base_phase(start_date, duration_weeks=4)
 
         assert phase.phase_type == TrainingPhaseType.BASE
@@ -46,8 +46,8 @@ class TestTrainingPlanModels:
 
     def test_training_plan_creation(self):
         """Test creating a training plan."""
-        start_date = date(2025, 1, 1)
-        end_date = date(2025, 4, 1)
+        start_date = date.today() + timedelta(days=30)
+        end_date = start_date + timedelta(weeks=12)
 
         plan = TrainingPlan(
             plan_id="test-plan-1",
@@ -100,7 +100,7 @@ class TestTrainingPlanModels:
 
         planned = PlannedWorkout(
             workout_id="pw-1",
-            date=date(2025, 1, 15),
+            date=date.today() + timedelta(days=45),
             workout=workout,
             priority=WorkoutPriority.BENEFICIAL,
             rationale="Active recovery",
@@ -129,11 +129,11 @@ class TestPlanStorage:
                 athlete_id="athlete1",
                 athlete_name="Test Athlete",
                 created_date=datetime.now(),
-                start_date=date(2025, 1, 1),
-                end_date=date(2025, 4, 1),
+                start_date=date.today() + timedelta(days=30),
+                end_date=date.today() + timedelta(days=120),
                 last_updated=datetime.now(),
-                primary_goal={"name": "Test Race", "date": "2025-04-01"},
-                phases=[create_base_phase(date(2025, 1, 1), 4)],
+                primary_goal={"name": "Test Race", "date": (date.today() + timedelta(days=120)).isoformat()},
+                phases=[create_base_phase(date.today() + timedelta(days=30), 4)],
             )
 
             # Save
@@ -159,10 +159,10 @@ class TestPlanStorage:
                     athlete_id=f"athlete{i}",
                     athlete_name=f"Athlete {i}",
                     created_date=datetime.now(),
-                    start_date=date(2025, 1, 1),
-                    end_date=date(2025, 4, 1),
+                    start_date=date.today() + timedelta(days=30),
+                    end_date=date.today() + timedelta(days=120),
                     last_updated=datetime.now(),
-                    primary_goal={"name": f"Race {i}", "date": "2025-04-01"},
+                    primary_goal={"name": f"Race {i}", "date": (date.today() + timedelta(days=120)).isoformat()},
                     phases=[],
                 )
                 storage.save_plan(plan, backup=False)
@@ -203,10 +203,10 @@ class TestAdaptationEngine:
             athlete_id="athlete1",
             athlete_name="Test",
             created_date=datetime.now(),
-            start_date=date(2025, 1, 1),
-            end_date=date(2025, 4, 1),
+            start_date=date.today() + timedelta(days=30),
+            end_date=date.today() + timedelta(days=120),
             last_updated=datetime.now(),
-            primary_goal={"name": "Race", "date": "2025-04-01"},
+            primary_goal={"name": "Race", "date": (date.today() + timedelta(days=120)).isoformat()},
             phases=[],
             weekly_schedules=[],
         )
@@ -235,7 +235,7 @@ class TestWorkoutSelector:
     def test_select_base_phase_workout(self):
         """Test workout selection for base phase."""
         selector = WorkoutSelector()
-        phase = create_base_phase(date(2025, 1, 1), 4)
+        phase = create_base_phase(date.today() + timedelta(days=30), 4)
 
         workout_type, duration, priority = selector.select_workout_for_day(
             day_of_week="Saturday",
@@ -252,7 +252,7 @@ class TestWorkoutSelector:
     def test_select_low_readiness_override(self):
         """Test low readiness overrides plan."""
         selector = WorkoutSelector()
-        phase = create_build_phase(date(2025, 1, 1), 8)
+        phase = create_build_phase(date.today() + timedelta(days=30), 8)
 
         workout_type, duration, priority = selector.select_workout_for_day(
             day_of_week="Tuesday",  # Normally hard day
@@ -267,11 +267,11 @@ class TestWorkoutSelector:
     def test_select_weekly_schedule(self):
         """Test generating full weekly schedule."""
         selector = WorkoutSelector()
-        phase = create_base_phase(date(2025, 1, 6), 4)  # Monday
+        phase = create_base_phase(date.today() + timedelta(days=35), 4)  # Monday
 
         schedule = selector.select_weekly_schedule(
             phase=phase,
-            week_start_date=date(2025, 1, 6),
+            week_start_date=date.today() + timedelta(days=35),
             average_readiness=75,
             sport=Sport.RUNNING,
         )

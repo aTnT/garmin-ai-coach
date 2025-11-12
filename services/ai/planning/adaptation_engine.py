@@ -70,13 +70,14 @@ class AdaptationEngine:
         completion_threshold = self.LOW_COMPLETION_THRESHOLD / self.sensitivity
         readiness_threshold = self.LOW_READINESS_THRESHOLD / self.sensitivity
 
-        # Check 1: Overall completion rate
-        if plan.overall_completion_rate < completion_threshold * 100:
-            return (
-                True,
-                AdaptationTrigger.MISSED_WORKOUTS,
-                f"Overall completion rate {plan.overall_completion_rate:.1f}% below threshold",
-            )
+        # Check 1: Overall completion rate (only if plan has workouts)
+        if plan.weekly_schedules:  # Only check if plan has scheduled workouts
+            if plan.overall_completion_rate < completion_threshold * 100:
+                return (
+                    True,
+                    AdaptationTrigger.MISSED_WORKOUTS,
+                    f"Overall completion rate {plan.overall_completion_rate:.1f}% below threshold",
+                )
 
         # Check 2: Current week completion
         current_week = plan.current_week
