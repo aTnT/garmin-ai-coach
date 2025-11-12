@@ -341,11 +341,13 @@ class TrainingPlan:
 
     # Goals
     primary_goal: dict[str, Any]  # Competition dict
+
+    # Periodization (required field must come before defaults)
+    phases: list[TrainingPhase]
+
+    # Optional goals and metrics
     secondary_goals: list[dict[str, Any]] = field(default_factory=list)
     target_metrics: dict[str, Any] = field(default_factory=dict)  # "FTP": 300, etc.
-
-    # Periodization
-    phases: list[TrainingPhase]
     current_phase_id: str | None = None
 
     # Schedule
@@ -477,12 +479,12 @@ class PlanSummary:
     total_adaptations: int
     recent_adaptation_triggers: list[str]
 
-    # Readiness
+    # Recommendations (required field must come before defaults)
+    current_status: AdaptationStatus
+
+    # Readiness (optional)
     average_readiness_score: float | None = None
     readiness_trend: str | None = None  # "improving", "stable", "declining"
-
-    # Recommendations
-    current_status: AdaptationStatus
     recommendations: list[str] = field(default_factory=list)
 
 
