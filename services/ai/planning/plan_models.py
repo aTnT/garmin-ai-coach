@@ -384,7 +384,6 @@ class TrainingPlan:
                 return week
         return None
 
-    @property
     def upcoming_workouts(self, days: int = 7) -> list[PlannedWorkout]:
         """Get workouts in next N days."""
         today = date.today()

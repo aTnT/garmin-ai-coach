@@ -182,6 +182,11 @@ class TestAdaptationStrategies:
 
         plan = self._create_test_plan_with_workouts()
 
+        # Mark all workouts as completed to avoid MISSED_WORKOUTS trigger
+        for week in plan.weekly_schedules:
+            for workout in week.planned_workouts:
+                workout.completed = True
+
         # 3 consecutive days of low readiness
         readiness_history = [
             (date.today() - timedelta(days=0), 55),
@@ -202,6 +207,12 @@ class TestAdaptationStrategies:
         engine = AdaptationEngine()
 
         plan = self._create_test_plan_with_workouts()
+
+        # Mark all workouts as completed to avoid MISSED_WORKOUTS trigger
+        for week in plan.weekly_schedules:
+            for workout in week.planned_workouts:
+                workout.completed = True
+
         readiness_history = [(date.today() - timedelta(days=i), 75) for i in range(7)]
 
         should_adapt, trigger, details = engine.should_adapt_plan(
@@ -278,6 +289,7 @@ class TestAdaptationStrategies:
             start_date=start_date,
             end_date=start_date + timedelta(days=7),
             phase_id=phase.phase_id,
+            target_volume_hours=10.0,  # Required parameter
             planned_workouts=[
                 PlannedWorkout(
                     workout_id=f"wo-{i}",

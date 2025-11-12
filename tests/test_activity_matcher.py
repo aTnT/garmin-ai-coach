@@ -35,7 +35,9 @@ class MockActivity:
         self.activity_id = activity_id
         self.start_time = start_time
         self.name = name
+        self.activity_type = sport
         self.sport = sport
+        self.sport_type = sport  # Used by activity_matcher
         self.duration_seconds = duration_seconds
         self.distance = distance
         self.average_hr = average_hr
