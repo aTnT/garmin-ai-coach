@@ -33,6 +33,7 @@ from .plan_storage import PlanStorage
 from .activity_matcher import ActivityMatcher
 from .adaptation_engine import AdaptationEngine
 from .workout_selector import WorkoutSelector
+from .performance_analyzer import PerformanceAnalyzer, PerformanceMetrics
 
 __all__ = [
     # Core models
@@ -57,6 +58,8 @@ __all__ = [
     "ActivityMatcher",
     "AdaptationEngine",
     "WorkoutSelector",
+    "PerformanceAnalyzer",
+    "PerformanceMetrics",
     # Factory functions
     "create_base_phase",
     "create_build_phase",

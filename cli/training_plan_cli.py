@@ -19,6 +19,7 @@ from services.ai.planning import (
     WorkoutSelector,
     AdaptationEngine,
     ActivityMatcher,
+    PerformanceAnalyzer,
 )
 from services.ai.workouts.workout_models import Sport
 from services.garmin.models import Activity

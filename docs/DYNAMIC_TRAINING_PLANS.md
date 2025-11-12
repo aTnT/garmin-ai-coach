@@ -13,9 +13,11 @@ The **Dynamic Training Plans** feature provides adaptive, goal-driven training p
 
 ### ✅ Dynamic Adaptation
 - **Readiness-Based**: Automatically adjusts intensity based on HRV, sleep, training load
+- **Performance-Based**: Analyzes FTP trends, power curves, interval quality, VO2max
 - **Completion Tracking**: Monitors workout execution and completion rates
 - **Auto-Rescheduling**: Moves missed key workouts to optimal dates
 - **Load Management**: Prevents overtraining via ACWR monitoring
+- **Analytical Insights**: GAP pace, zone adherence, HR drift detection
 
 ### ✅ Workout-Level Intelligence
 - **Context-Aware Selection**: Chooses workouts based on phase, day, readiness
@@ -43,6 +45,7 @@ services/ai/planning/
 ├── plan_storage.py         # Persistence layer
 ├── activity_matcher.py     # Planned vs. actual matching
 ├── adaptation_engine.py    # Dynamic adaptation logic
+├── performance_analyzer.py # Performance metrics analysis
 ├── workout_selector.py     # Context-aware workout selection
 └── __init__.py            # Public API
 ```
@@ -235,7 +238,7 @@ for completion in completions:
     print(f"  Intensity Adherence: {completion.intensity_adherence:.2f}")
 ```
 
-#### Check Adaptation Needs
+#### Check Adaptation Needs (Basic)
 
 ```python
 from services.ai.planning import AdaptationEngine
@@ -270,6 +273,105 @@ if should_adapt:
 
     print(f"Adapted {len(decision.affected_workouts)} workouts")
     print(f"Reasoning: {decision.reasoning}")
+```
+
+#### Enhanced Adaptation with Performance Analysis
+
+```python
+from services.ai.planning import AdaptationEngine, PerformanceAnalyzer
+from services.garmin.client import GarminClient
+
+engine = AdaptationEngine(sensitivity=1.0)
+garmin = GarminClient()
+
+# Get readiness history
+readiness_history = [
+    (date.today() - timedelta(days=i), readiness_scores[i])
+    for i in range(7)
+]
+
+# Get recent activities with power/HR data
+recent_activities = garmin.get_activities(days=28)
+historical_activities = garmin.get_activities(days=90)
+
+# Enhanced adaptation check using performance metrics
+should_adapt, trigger, details, perf_metrics = engine.should_adapt_plan_enhanced(
+    plan=plan,
+    readiness_history=readiness_history,
+    recent_activities=recent_activities,
+    historical_activities=historical_activities,
+    recent_acwr=1.2,
+)
+
+# View performance insights
+if perf_metrics:
+    print(f"Performance Direction: {perf_metrics.performance_direction}")
+    print(f"Confidence: {perf_metrics.confidence:.1%}")
+
+    if perf_metrics.current_ftp:
+        print(f"Current FTP: {perf_metrics.current_ftp:.0f}W")
+        print(f"FTP Trend: {perf_metrics.ftp_trend} ({perf_metrics.ftp_change_pct:+.1f}%)")
+
+    print(f"Interval Adherence: {perf_metrics.avg_interval_adherence:.1%}")
+    print(f"Zone Drift Score: {perf_metrics.zone_drift_score:.2f}")
+
+if should_adapt:
+    print(f"\n⚠️ Adaptation needed: {trigger.value}")
+    print(f"Reason: {details}")
+
+    # Apply adaptation
+    decision = engine.adapt_upcoming_workouts(
+        plan=plan,
+        trigger=trigger,
+        trigger_details=details,
+        readiness_score=65,
+        days_ahead=7,
+    )
+
+    print(f"Adapted {len(decision.affected_workouts)} workouts")
+```
+
+#### Analyze Performance Metrics Directly
+
+```python
+from services.ai.planning import PerformanceAnalyzer
+from services.garmin.client import GarminClient
+
+analyzer = PerformanceAnalyzer()
+garmin = GarminClient()
+
+# Get activities
+recent = garmin.get_activities(days=28)
+historical = garmin.get_activities(days=90)
+
+# Analyze performance
+metrics = analyzer.analyze_recent_performance(
+    recent_activities=recent,
+    historical_activities=historical,
+)
+
+# View detailed metrics
+print("Power Metrics:")
+print(f"  5s Power: {metrics.power_5s}W")
+print(f"  1min Power: {metrics.power_1min}W")
+print(f"  5min Power: {metrics.power_5min}W")
+print(f"  20min Power: {metrics.power_20min}W")
+print(f"  FTP: {metrics.current_ftp}W ({metrics.ftp_trend})")
+print(f"  Critical Power: {metrics.cp}W, W': {metrics.w_prime}J")
+
+print("\nVO2max Metrics:")
+print(f"  Current: {metrics.vo2max_current}")
+print(f"  Trend: {metrics.vo2max_trend} ({metrics.vo2max_change_pct:+.1f}%)")
+
+print("\nInterval Quality:")
+print(f"  Adherence: {metrics.avg_interval_adherence:.1%}")
+print(f"  Zone Drift: {metrics.zone_drift_score:.2f}")
+print(f"  Consistency: {metrics.consistency_score:.2f}")
+
+# Get adaptation recommendation
+should_adapt, reasoning = analyzer.get_adaptation_recommendation(metrics)
+print(f"\nRecommendation: {'ADAPT' if should_adapt else 'CONTINUE'}")
+print(f"Reasoning: {reasoning}")
 ```
 
 ---
@@ -364,11 +466,50 @@ class AdaptationDecision:
     requires_approval: bool = False
 ```
 
+### PerformanceMetrics
+
+Performance analysis results from recent workouts.
+
+```python
+class PerformanceMetrics:
+    # Power metrics
+    current_ftp: float | None
+    ftp_trend: str  # "improving", "stable", "declining"
+    ftp_change_pct: float
+    power_5s: float | None
+    power_1min: float | None
+    power_5min: float | None
+    power_20min: float | None
+    power_60min: float | None
+    cp: float | None  # Critical Power
+    w_prime: float | None  # W' (anaerobic capacity)
+
+    # VO2max metrics
+    vo2max_current: float | None
+    vo2max_trend: str
+    vo2max_change_pct: float
+
+    # Interval quality
+    avg_interval_adherence: float  # 0-1
+    zone_drift_score: float  # 0-1, 0=no drift
+    consistency_score: float  # 0-1
+
+    # Pace metrics (running)
+    current_pace_threshold: str | None
+    gap_pace_improvement: float  # % change
+
+    # Overall assessment
+    performance_direction: str  # "improving", "stable", "declining"
+    confidence: float  # 0-1
+```
+
 ---
 
 ## Adaptation Logic
 
 ### Adaptation Triggers
+
+#### Basic Triggers
 
 1. **LOW_READINESS**: Average readiness < 60 for 3+ days
    - Action: Convert hard sessions to recovery, reduce volume by 30%
@@ -379,12 +520,43 @@ class AdaptationDecision:
 3. **HIGH_TRAINING_LOAD**: ACWR > 1.5
    - Action: Insert recovery days, reduce intensity
 
-4. **POOR_PERFORMANCE**: Declining metrics
-   - Action: Reduce to tempo intensity, rebuild foundation
+4. **ILLNESS_INJURY**: User-reported (requires approval)
 
-5. **ILLNESS_INJURY**: User-reported (requires approval)
+5. **RACE_CHANGE**: Goal date/type changed (requires approval)
 
-6. **RACE_CHANGE**: Goal date/type changed (requires approval)
+#### Performance-Based Triggers (Enhanced Mode)
+
+These triggers use detailed workout analytics:
+
+1. **FTP DECLINING > 5%**
+   - Trigger: `POOR_PERFORMANCE`
+   - Detection: Compare 4-week FTP to 4-8 week baseline
+   - Action: Reduce to tempo intensity, add recovery days
+   - Reasoning: Overreaching detected, need recovery period
+
+2. **VO2MAX DECLINING > 3%**
+   - Trigger: `POOR_PERFORMANCE`
+   - Detection: Compare recent VO2max estimates to baseline
+   - Action: Reduce training load, maintain aerobic work
+   - Reasoning: Accumulated fatigue affecting aerobic capacity
+
+3. **POOR INTERVAL QUALITY < 70%**
+   - Trigger: `POOR_PERFORMANCE`
+   - Detection: Zone adherence analysis from HR streams
+   - Action: Reduce interval intensity or convert to tempo
+   - Reasoning: Athlete struggling to execute prescribed zones
+
+4. **HIGH ZONE DRIFT > 50%**
+   - Trigger: `HIGH_TRAINING_LOAD`
+   - Detection: HR drift within interval sets (>10% drift = 1.0)
+   - Action: Reduce training load, add recovery
+   - Reasoning: Accumulated fatigue causing HR drift
+
+5. **PERFORMANCE IMPROVING (Override)**
+   - Special case: Continue despite moderate readiness
+   - Detection: FTP/VO2max improving with high confidence
+   - Action: Override LOW_READINESS trigger, continue as planned
+   - Reasoning: Positive adaptation occurring, maintain training stimulus
 
 ### Adaptation Strategies
 
@@ -402,6 +574,89 @@ class AdaptationDecision:
 - Reduce session count
 - Focus on key sessions only
 - Reschedule important workouts
+
+---
+
+## Performance Analysis Details
+
+### How Performance Metrics Are Calculated
+
+#### Power Curve Analysis
+
+The system uses the existing `PowerCurveAnalyzer` to extract peak powers:
+
+- **5s Power**: Neuromuscular power (sprinting)
+- **1min Power**: Anaerobic capacity
+- **5min Power**: VO2max power
+- **20min Power**: FTP estimate (× 0.95)
+- **60min Power**: Threshold endurance
+
+**Critical Power (CP) & W':**
+- Calculated from power curve using 2-parameter model
+- CP = sustainable power indefinitely
+- W' = anaerobic work capacity (joules)
+
+**FTP Trend Detection:**
+- Compare recent 4-week FTP to 4-8 week baseline
+- >3% increase = "improving"
+- <-3% decrease = "declining"
+- Otherwise = "stable"
+
+#### VO2max Trend Analysis
+
+From Garmin's VO2max estimates:
+- Extract VO2max values from recent activities
+- Compare average of 3 most recent to 3 oldest
+- >2% = improving, <-2% = declining
+
+#### Interval Quality Analysis
+
+**Interval Detection:**
+- Analyzes HR stream to find "hard" segments
+- Threshold: HR > 20% above baseline
+- Minimum duration: 60 seconds
+
+**Zone Adherence (0-1):**
+- Calculates % of interval time in target zone (Z4: 80-90% max HR)
+- 1.0 = perfect adherence
+- 0.7 = 70% in zone
+- <0.7 triggers adaptation
+
+**Zone Drift (0-1):**
+- Compares HR in first vs last interval
+- Measures cardiovascular drift due to fatigue
+- 0.0 = no drift
+- >0.5 = significant drift (>10% HR increase)
+
+**Consistency (0-1):**
+- Coefficient of variation across intervals
+- 1.0 = perfect consistency
+- Lower = more variable execution
+
+#### Grade Adjusted Pace (GAP)
+
+For running activities:
+```
+GAP = base_pace / (1 + elevation_gain_per_km × 0.001)
+```
+
+Normalizes pace for hills:
+- 100m gain per km = ~10 sec/km adjustment
+- Allows fair comparison of hilly vs flat runs
+- Used for pace trend analysis
+
+#### Performance Direction
+
+Weighted combination of indicators:
+- FTP trend (if available)
+- Power curve improvement
+- VO2max trend
+- Interval quality
+
+**Confidence Score:**
+- Based on number of available metrics
+- More data sources = higher confidence
+- Requires >70% confidence to trigger adaptation
 
 ---
 
@@ -571,13 +826,39 @@ class ActivityMatcher:
 ```python
 class AdaptationEngine:
     def __init__(self, sensitivity: float = 1.0)
+
     def should_adapt_plan(
-        self, plan: TrainingPlan, readiness_history: list[tuple[date, int]], recent_acwr: float | None
+        self, plan: TrainingPlan, readiness_history: list[tuple[date, int]],
+        recent_acwr: float | None
     ) -> tuple[bool, AdaptationTrigger | None, str]
+
+    def should_adapt_plan_enhanced(
+        self, plan: TrainingPlan, readiness_history: list[tuple[date, int]],
+        recent_activities: list[Activity], historical_activities: list[Activity] | None,
+        recent_acwr: float | None
+    ) -> tuple[bool, AdaptationTrigger | None, str, PerformanceMetrics | None]
+
     def adapt_upcoming_workouts(
         self, plan: TrainingPlan, trigger: AdaptationTrigger, trigger_details: str,
         readiness_score: int | None, days_ahead: int = 7
     ) -> AdaptationDecision
+```
+
+### PerformanceAnalyzer
+
+```python
+class PerformanceAnalyzer:
+    def __init__(self)
+
+    def analyze_recent_performance(
+        self, recent_activities: list[Activity],
+        historical_activities: list[Activity] | None = None,
+        lookback_days: int = 28
+    ) -> PerformanceMetrics
+
+    def get_adaptation_recommendation(
+        self, metrics: PerformanceMetrics
+    ) -> tuple[bool, str]
 ```
 
 ### WorkoutSelector

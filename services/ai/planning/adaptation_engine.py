@@ -10,6 +10,7 @@ import uuid
 
 from services.ai.workouts.workout_generator import WorkoutGenerator
 from services.ai.workouts.workout_models import WorkoutType, StructuredWorkout
+from services.garmin.models import Activity
 from .plan_models import (
     AdaptationDecision,
     AdaptationStatus,
@@ -20,6 +21,7 @@ from .plan_models import (
     WorkoutCompletion,
     WorkoutPriority,
 )
+from .performance_analyzer import PerformanceAnalyzer, PerformanceMetrics
 
 
 class AdaptationEngine:
@@ -41,6 +43,7 @@ class AdaptationEngine:
         """
         self.sensitivity = sensitivity
         self.workout_generator = WorkoutGenerator()
+        self.performance_analyzer = PerformanceAnalyzer()
 
     def should_adapt_plan(
         self,
@@ -119,6 +122,117 @@ class AdaptationEngine:
             )
 
         return False, None, "Plan on track"
+
+    def should_adapt_plan_enhanced(
+        self,
+        plan: TrainingPlan,
+        readiness_history: list[tuple[date, int]],
+        recent_activities: list[Activity],
+        historical_activities: list[Activity] | None = None,
+        recent_acwr: float | None = None,
+    ) -> tuple[bool, AdaptationTrigger | None, str, PerformanceMetrics | None]:
+        """
+        Enhanced adaptation check using performance analysis.
+
+        Integrates workout performance data (FTP, power curves, interval quality)
+        with readiness and completion metrics for intelligent adaptation decisions.
+
+        Args:
+            plan: Current training plan
+            readiness_history: List of (date, readiness_score) tuples
+            recent_activities: Recent activities (last 2-4 weeks)
+            historical_activities: Historical baseline for comparison
+            recent_acwr: Recent Acute:Chronic Workload Ratio
+
+        Returns:
+            Tuple of (should_adapt, trigger, details, performance_metrics)
+        """
+        # Check basic adaptation triggers first
+        basic_adapt, basic_trigger, basic_details = self.should_adapt_plan(
+            plan, readiness_history, recent_acwr
+        )
+
+        # Analyze performance metrics
+        performance_metrics = self.performance_analyzer.analyze_recent_performance(
+            recent_activities=recent_activities,
+            historical_activities=historical_activities,
+        )
+
+        # Get performance-based recommendation
+        perf_adapt, perf_reasoning = self.performance_analyzer.get_adaptation_recommendation(
+            performance_metrics
+        )
+
+        # Decision logic: Combine basic and performance analysis
+
+        # Priority 1: Performance declining significantly
+        if (performance_metrics.performance_direction == "declining"
+            and performance_metrics.confidence > 0.7):
+
+            # FTP declining > 5%
+            if performance_metrics.ftp_change_pct < -5:
+                return (
+                    True,
+                    AdaptationTrigger.POOR_PERFORMANCE,
+                    f"FTP declined {performance_metrics.ftp_change_pct:.1f}% - overreaching detected",
+                    performance_metrics,
+                )
+
+            # VO2max declining > 3%
+            if performance_metrics.vo2max_change_pct < -3:
+                return (
+                    True,
+                    AdaptationTrigger.POOR_PERFORMANCE,
+                    f"VO2max declined {performance_metrics.vo2max_change_pct:.1f}% - reduce training load",
+                    performance_metrics,
+                )
+
+        # Priority 2: Poor interval execution quality
+        if performance_metrics.avg_interval_adherence < 0.70:
+            return (
+                True,
+                AdaptationTrigger.POOR_PERFORMANCE,
+                f"Poor interval quality ({performance_metrics.avg_interval_adherence:.1%}) - "
+                f"athlete struggling with prescribed zones",
+                performance_metrics,
+            )
+
+        # Priority 3: High zone drift (fatigue)
+        if performance_metrics.zone_drift_score > 0.5:
+            return (
+                True,
+                AdaptationTrigger.HIGH_TRAINING_LOAD,
+                f"Significant HR drift ({performance_metrics.zone_drift_score:.1%}) during intervals - "
+                f"accumulated fatigue",
+                performance_metrics,
+            )
+
+        # Priority 4: Performance improving - override low readiness
+        if (performance_metrics.performance_direction == "improving"
+            and performance_metrics.confidence > 0.7
+            and basic_trigger == AdaptationTrigger.LOW_READINESS):
+
+            # Even if readiness is moderate, keep intensity if performance improving
+            return (
+                False,
+                None,
+                f"Performance improving (FTP: {performance_metrics.ftp_change_pct:+.1f}%, "
+                f"VO2max: {performance_metrics.vo2max_change_pct:+.1f}%) - "
+                f"continue as planned despite moderate readiness",
+                performance_metrics,
+            )
+
+        # Priority 5: Use basic adaptation if triggered
+        if basic_adapt:
+            return (True, basic_trigger, basic_details, performance_metrics)
+
+        # No adaptation needed
+        return (
+            False,
+            None,
+            "Performance and readiness metrics within normal range",
+            performance_metrics
+        )
 
     def adapt_upcoming_workouts(
         self,
