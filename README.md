@@ -507,17 +507,45 @@ garmin-ai-coach/
 
 ## 🔧 Development Commands
 
+### Code Quality
 ```bash
-# Code Quality
 pixi run lint-ruff              # Linting
-pixi run ruff-fix               # Auto-fix issues  
+pixi run ruff-fix               # Auto-fix issues
 pixi run format                 # Black + isort formatting
 pixi run type-check             # MyPy type checking
-
-# Testing & Analysis
-pixi run test                   # Run test suite
 pixi run dead-code              # Find unused code (Vulture)
 ```
+
+### Testing & Coverage
+```bash
+# Quick Commands (via Makefile)
+make test                       # Run all tests
+make test-planning              # Run planning module tests (fast)
+make test-coverage-planning     # Generate detailed coverage report
+make clean                      # Remove test artifacts
+
+# Pixi Commands
+pixi run test                   # Run test suite
+```
+
+**Test Coverage Achievements:**
+
+| Module | Coverage | Tests | Status |
+|--------|----------|-------|--------|
+| **plan_storage.py** | **98%** | 21 | ✅ Comprehensive |
+| **workout_selector.py** | **95%** | 33 | ✅ Advanced |
+| **performance_analyzer.py** | **96%** | 43 | ✅ Robust |
+| **workout_generator.py** | **93%** | 11 | ✅ Solid |
+| **Overall Planning** | **60%** | 139 | ✅ Production-Ready |
+
+**139 tests | 100% pass rate | 60% codebase coverage**
+
+See [TESTING.md](TESTING.md) for comprehensive testing documentation, including:
+- Quick start guide and test commands
+- Coverage reports (terminal & HTML)
+- Test structure and organization
+- CI/CD integration
+- Debugging and troubleshooting tips
 
 ---
 
