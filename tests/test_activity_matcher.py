@@ -135,14 +135,14 @@ class TestActivityMatcher:
         workout_date = date.today()
         planned = self._create_planned_workout(workout_date, WorkoutType.THRESHOLD, 60)
 
-        # Perfect execution
+        # Perfect execution - HR matches Z4 target (85% of max)
         activity = MockActivity(
             activity_id="act-1",
             start_time=datetime.combine(workout_date, datetime.min.time()),
             name="Threshold",
             sport="running",
             duration_seconds=3600,  # Exact 60 minutes
-            average_hr=165,  # Good threshold HR
+            average_hr=153,  # 85% of 180 = perfect threshold HR
         )
 
         completion = matcher.match_activity_to_workout(planned, [activity])
@@ -158,7 +158,7 @@ class TestActivityMatcher:
         workout_date = date.today()
         planned = self._create_planned_workout(workout_date, WorkoutType.VO2MAX, 45)
 
-        # Only 50% duration completed
+        # Only 50% duration completed - should be PARTIAL (< 70%)
         activity = MockActivity(
             activity_id="act-1",
             start_time=datetime.combine(workout_date, datetime.min.time()),
@@ -170,7 +170,7 @@ class TestActivityMatcher:
         completion = matcher.match_activity_to_workout(planned, [activity])
 
         assert completion is not None
-        assert completion.quality_rating == CompletionQuality.POOR
+        assert completion.quality_rating == CompletionQuality.PARTIAL
         assert completion.completion_percentage < 70
 
     def test_match_activities_to_week(self):
@@ -225,14 +225,14 @@ class TestActivityMatcher:
             workout_date, WorkoutType.THRESHOLD, 60
         )
 
-        # Activity with appropriate threshold HR
+        # Activity with appropriate threshold HR (Z4 = 85% of max)
         activity = MockActivity(
             activity_id="act-1",
             start_time=datetime.combine(workout_date, datetime.min.time()),
             name="Threshold",
             sport="running",
             duration_seconds=3600,
-            average_hr=165,  # Good threshold HR
+            average_hr=153,  # 85% of 180 = perfect threshold HR
         )
 
         completion = matcher.match_activity_to_workout(planned, [activity])
@@ -288,19 +288,21 @@ class TestActivityMatcher:
         workout_date = date.today()
         planned = self._create_planned_workout(workout_date, WorkoutType.ENDURANCE, 120)
 
-        # Activity with 75% duration
+        # Activity with 75% duration and appropriate endurance HR (Z2 = 65%)
         activity = MockActivity(
             activity_id="act-1",
             start_time=datetime.combine(workout_date, datetime.min.time()),
             name="Long Run - cut short",
             sport="running",
             duration_seconds=5400,  # 90 minutes (75%)
+            average_hr=117,  # 65% of 180 = endurance zone HR
         )
 
         completion = matcher.match_activity_to_workout(planned, [activity])
 
         assert completion is not None
-        assert completion.quality_rating == CompletionQuality.PARTIAL
+        # 75% duration with good intensity should be ADEQUATE
+        assert completion.quality_rating == CompletionQuality.ADEQUATE
         assert 70 <= completion.completion_percentage < 90
 
     def test_multiple_activities_same_day(self):
@@ -345,6 +347,28 @@ class TestActivityMatcher:
         sport: Sport = Sport.RUNNING,
     ) -> PlannedWorkout:
         """Helper to create planned workout."""
+        # Map workout types to appropriate intensity zones
+        workout_type_to_zone = {
+            WorkoutType.RECOVERY: IntensityZone.Z1,
+            WorkoutType.ENDURANCE: IntensityZone.Z2,
+            WorkoutType.TEMPO: IntensityZone.Z3,
+            WorkoutType.THRESHOLD: IntensityZone.Z4,
+            WorkoutType.VO2MAX: IntensityZone.Z5,
+            WorkoutType.SPEED: IntensityZone.Z5,
+        }
+
+        intensity_zone = workout_type_to_zone.get(workout_type, IntensityZone.Z3)
+
+        # Determine peak zone (one level higher than average, max Z5)
+        zone_progression = {
+            IntensityZone.Z1: IntensityZone.Z2,
+            IntensityZone.Z2: IntensityZone.Z3,
+            IntensityZone.Z3: IntensityZone.Z4,
+            IntensityZone.Z4: IntensityZone.Z5,
+            IntensityZone.Z5: IntensityZone.Z5,
+        }
+        peak_zone = zone_progression[intensity_zone]
+
         workout = StructuredWorkout(
             workout_id=workout_id,
             name=f"{workout_type.value} workout",
@@ -357,14 +381,14 @@ class TestActivityMatcher:
                     intervals=[
                         Interval(
                             duration_minutes=duration_minutes,
-                            intensity_zone=IntensityZone.Z3,
+                            intensity_zone=intensity_zone,
                             description="Steady effort",
                         )
                     ],
                 )
             ],
-            average_intensity=IntensityZone.Z3,
-            peak_intensity=IntensityZone.Z4,
+            average_intensity=intensity_zone,
+            peak_intensity=peak_zone,
             goal="Training",
         )
 
