@@ -64,5 +64,13 @@ coach-init = "python cli/garmin_ai_coach_cli.py --init-config"
 workout-gen = "python cli/workout_generator_cli.py"
 workout-help = "python cli/workout_generator_cli.py --help"
 
+# Training plan management
+plan = "python cli/training_plan_cli.py"
+plan-create = "python cli/training_plan_cli.py create"
+plan-list = "python cli/training_plan_cli.py list"
+plan-show = "python cli/training_plan_cli.py show"
+plan-upcoming = "python cli/training_plan_cli.py upcoming"
+plan-adapt = "python cli/training_plan_cli.py adapt"
+
 [environments]
 default = { solve-group = "default" }

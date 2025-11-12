@@ -255,3 +255,57 @@ class StructuredWorkout:
             "adapted_for_readiness": self.adapted_for_readiness,
             "readiness_modifications": self.readiness_modifications,
         }
+
+
+# Helper functions for serialization
+
+def workout_to_dict(workout: StructuredWorkout) -> dict[str, Any]:
+    """Convert StructuredWorkout to dict (convenience wrapper)."""
+    return workout.to_dict()
+
+
+def dict_to_workout(data: dict[str, Any]) -> StructuredWorkout:
+    """Convert dict back to StructuredWorkout."""
+    # Reconstruct segments
+    segments = []
+    for seg_data in data.get("segments", []):
+        intervals = []
+        for interval_data in seg_data.get("intervals", []):
+            intervals.append(
+                Interval(
+                    duration_minutes=interval_data["duration"],
+                    intensity_zone=IntensityZone(interval_data["zone"]),
+                    description=interval_data["description"],
+                    repetitions=interval_data.get("repetitions", 1),
+                    rest_duration_minutes=interval_data.get("rest_duration", 0),
+                    target_hr=interval_data.get("target_hr"),
+                    target_power=interval_data.get("target_power"),
+                    target_pace=interval_data.get("target_pace"),
+                )
+            )
+
+        segments.append(
+            WorkoutSegment(
+                name=seg_data["name"],
+                intervals=intervals,
+            )
+        )
+
+    return StructuredWorkout(
+        workout_id=data["workout_id"],
+        name=data["name"],
+        sport=Sport(data["sport"]),
+        workout_type=WorkoutType(data["workout_type"]),
+        duration_minutes=data["duration_minutes"],
+        segments=segments,
+        average_intensity=IntensityZone(data["average_intensity"]),
+        peak_intensity=IntensityZone(data["peak_intensity"]),
+        goal=data["goal"],
+        expected_adaptations=data.get("expected_adaptations", []),
+        coaching_cues=data.get("coaching_cues", []),
+        terrain=Terrain(data.get("terrain", "flat")),
+        equipment_needed=data.get("equipment_needed", []),
+        description=data.get("description", ""),
+        adapted_for_readiness=data.get("adapted_for_readiness", False),
+        readiness_modifications=data.get("readiness_modifications", []),
+    )
