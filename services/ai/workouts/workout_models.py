@@ -277,8 +277,9 @@ def dict_to_workout(data: dict[str, Any]) -> StructuredWorkout:
                     intensity_zone=IntensityZone(interval_data["zone"]),
                     description=interval_data["description"],
                     repetitions=interval_data.get("repetitions", 1),
-                    rest_duration_minutes=interval_data.get("rest_duration", 0),
-                    target_hr=interval_data.get("target_hr"),
+                    rest_after_minutes=interval_data.get("rest_duration", 0),
+                    target_hr_low=interval_data.get("target_hr_low"),
+                    target_hr_high=interval_data.get("target_hr_high"),
                     target_power=interval_data.get("target_power"),
                     target_pace=interval_data.get("target_pace"),
                 )

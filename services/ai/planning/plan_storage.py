@@ -198,6 +198,12 @@ class PlanStorage:
         for backup_file in self.backups_dir.glob(pattern):
             try:
                 timestamp_str = backup_file.stem.split("_backup_")[1]
+                # Restore colons that were replaced with dashes for filename safety
+                # Format is: YYYY-MM-DDTHH-MM-SS, need to restore colons in time part only
+                if "T" in timestamp_str:
+                    date_part, time_part = timestamp_str.split("T")
+                    time_part = time_part.replace("-", ":")
+                    timestamp_str = f"{date_part}T{time_part}"
                 timestamp = datetime.fromisoformat(timestamp_str)
 
                 with open(backup_file, "r") as f:
